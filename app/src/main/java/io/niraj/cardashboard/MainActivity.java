@@ -1,20 +1,51 @@
 package io.niraj.cardashboard;
 
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.firebase.client.Firebase;
 
 public class MainActivity extends ActionBarActivity {
+
+    String coordinates = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Firebase.setAndroidContext(this);
         setContentView(R.layout.activity_main);
 
-    }
+        Firebase myFirebaseRef = new Firebase("https://conantengineering.firebaseio.com/");
+        myFirebaseRef.child("test2").setValue("asidj");
 
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // Define a listener that responds to location updates
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                // Called when a new location is found by the network location provider.
+                System.out.println("NEW LOCATION");
+
+                Firebase myFirebaseRef = new Firebase("https://conantengineering.firebaseio.com/");
+                myFirebaseRef.child("coordinates").setValue(location.getLatitude() + "latitude" + location.getLongitude() + "long");
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            public void onProviderEnabled(String provider) {}
+
+            public void onProviderDisabled(String provider) {}
+        };
+
+        // Register the listener with the Location Manager to receive location updates
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
