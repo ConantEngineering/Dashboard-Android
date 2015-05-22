@@ -1,6 +1,7 @@
 package io.niraj.cardashboard;
 
 import android.content.Context;
+import android.hardware.SensorEvent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -21,8 +22,8 @@ public class MainActivity extends ActionBarActivity {
         Firebase.setAndroidContext(this);
         setContentView(R.layout.activity_main);
 
+        // Create Firebase Reference
         Firebase myFirebaseRef = new Firebase("https://conantengineering.firebaseio.com/");
-        myFirebaseRef.child("test2").setValue("asidj");
 
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
@@ -33,7 +34,9 @@ public class MainActivity extends ActionBarActivity {
                 System.out.println("NEW LOCATION");
 
                 Firebase myFirebaseRef = new Firebase("https://conantengineering.firebaseio.com/");
-                myFirebaseRef.child("coordinates").setValue(location.getLatitude() + "latitude" + location.getLongitude() + "long");
+                myFirebaseRef.child("coordinates").setValue("(" + location.getLatitude() + "," + location.getLongitude() + ")");
+                myFirebaseRef.child("speed").setValue("Current speed: " + location.getSpeed());
+                myFirebaseRef.child("acceleration").setValue("Current acceleration: " );
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -45,6 +48,32 @@ public class MainActivity extends ActionBarActivity {
 
         // Register the listener with the Location Manager to receive location updates
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+    }
+
+    public void onSensorChanged(SensorEvent event)
+    {
+        // alpha is calculated as t / (t + dT)
+        // with t, the low-pass filter's time-constant
+        // and dT, the event delivery rate
+
+        final float alpha = (float) 0.8;
+        float[] gravity  = new float[3];
+        float[] linear_acceleration  = new float[3];
+
+
+        gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
+        gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
+        gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
+
+        linear_acceleration[0] = event.values[0] - gravity[0];
+        linear_acceleration[1] = event.values[1] - gravity[1];
+        linear_acceleration[2] = event.values[2] - gravity[2];
+
+        Firebase myFirebaseRef = new Firebase("https://conantengineering.firebaseio.com/");
+        myFirebaseRef.child("acceleration").setValue("Current acceleration: " + linear_acceleration[0]);
+        System.out.println(linear_acceleration[0]);
+        System.out.println(linear_acceleration[1]);
+        System.out.println(linear_acceleration[2]);
     }
 
     @Override
